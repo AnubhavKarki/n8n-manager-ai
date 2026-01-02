@@ -1,0 +1,346 @@
+{
+    "nodes": [
+        {
+            "parameters": {},
+            "id": "d4219a03-433e-4db5-a494-13be26011f63",
+            "name": "Manual Trigger",
+            "type": "n8n-nodes-base.manualTrigger",
+            "typeVersion": 1,
+            "position": [
+                288,
+                -48
+            ],
+            "notes": "Manual trigger for testing LangChain Manager workflow"
+        },
+        {
+            "parameters": {},
+            "id": "b01f3f5c-18f1-427a-b8ce-cf565aad240a",
+            "name": "Daily Schedule (9AM weekdays)",
+            "type": "n8n-nodes-base.cron",
+            "typeVersion": 1,
+            "position": [
+                288,
+                112
+            ],
+            "notes": "Scheduled trigger for daily job management tasks"
+        },
+        {
+            "parameters": {
+                "options": {}
+            },
+            "id": "69d10355-d134-47bb-aecb-84e531056424",
+            "name": "Set Task Parameters",
+            "type": "n8n-nodes-base.set",
+            "typeVersion": 3,
+            "position": [
+                512,
+                -48
+            ],
+            "notes": "Standardize input parameters from LangChain triggers"
+        },
+        {
+            "parameters": {
+                "jsCode": "// Format message for Discord\nconst task = $input.all()[0].json;\nconst message = `**${task.jobTitle}**\n📅 Due: ${task.dueDate}\n📧 To: ${task.recipientEmail}\n\n${task.taskType === 'meeting' ? 'Meeting reminder' : 'Task assigned'}`;\n\nreturn [{ json: { ...task, discordMessage: message } }];"
+            },
+            "id": "debc47ee-bb08-42df-9346-6b4b5b57aa0d",
+            "name": "Format Discord Message",
+            "type": "n8n-nodes-base.code",
+            "typeVersion": 2,
+            "position": [
+                736,
+                -48
+            ],
+            "notes": "Generate formatted Discord alert with priority indicators"
+        },
+        {
+            "parameters": {
+                "resource": "message",
+                "operation": "post",
+                "guildId": {
+                    "__rl": true,
+                    "mode": "list",
+                    "value": ""
+                }
+            },
+            "id": "9e91d08a-a549-4b7b-931b-da3da6339f2f",
+            "name": "Send Discord Alert",
+            "type": "n8n-nodes-base.discord",
+            "typeVersion": 2,
+            "position": [
+                960,
+                -48
+            ],
+            "webhookId": "624ad8d3-8613-4c65-8627-182c8adb5155",
+            "notes": "Send formatted alert to Discord job channel"
+        },
+        {
+            "parameters": {
+                "jsCode": "// Format professional email body\nconst task = $input.all()[0].json;\nconst greeting = task.recipientEmail.includes('@outlook') ? 'Dear Team,' : 'Hi Team,';\nconst subject = `Action Required: ${task.jobTitle} - ${task.dueDate}`;\nconst body = `${greeting}\n\nPlease complete the following task:\n\n**${task.jobTitle}**\n\nDue Date: ${task.dueDate}\nPriority: ${task.priority.toUpperCase()}\n\n${task.taskType === 'meeting' ? 'Meeting Details: Zoom link will be shared.' : 'Please update status when complete.'}\n\nBest regards,\nManager Bot`;\n\nreturn [{ json: { ...task, emailSubject: subject, emailBody: body } }];"
+            },
+            "id": "d5064a92-3235-4fe7-98fe-cd9ac1f13d02",
+            "name": "Format Email Content",
+            "type": "n8n-nodes-base.code",
+            "typeVersion": 2,
+            "position": [
+                512,
+                112
+            ],
+            "notes": "Generate email content for both Gmail and Outlook recipients"
+        },
+        {
+            "parameters": {
+                "subject": "={{ $('Format Email Content').item.json.emailSubject }}",
+                "options": {}
+            },
+            "id": "7dc51aea-2b68-404d-b135-47e91c538743",
+            "name": "Send Gmail Email",
+            "type": "n8n-nodes-base.gmail",
+            "typeVersion": 2,
+            "position": [
+                960,
+                112
+            ],
+            "webhookId": "daa5cfa6-ff8f-4723-b64b-deaa75a8ef77",
+            "notes": "Send Gmail to @gmail.com addresses"
+        },
+        {
+            "parameters": {
+                "subject": "={{ $('Format Email Content').item.json.emailSubject }}",
+                "additionalFields": {}
+            },
+            "id": "ba674d59-446a-4259-a3e6-d9346ee8cd6b",
+            "name": "Send Outlook Email",
+            "type": "n8n-nodes-base.microsoftOutlook",
+            "typeVersion": 1,
+            "position": [
+                960,
+                272
+            ],
+            "notes": "Send Outlook email to @outlook.com / @hotmail.com addresses"
+        },
+        {
+            "parameters": {
+                "operation": "appendOrUpdate",
+                "documentId": {
+                    "__rl": true,
+                    "value": "1AbCdEfGhIjKlMnOpQrStUvWxYz",
+                    "mode": "id"
+                },
+                "sheetName": {
+                    "__rl": true,
+                    "value": "Job Tasks",
+                    "mode": "name"
+                },
+                "columns": {
+                    "mappingMode": "defineBelow",
+                    "value": {
+                        "Timestamp": "={{ new Date().toISOString() }}",
+                        "Job Title": "={{ $('Set Task Parameters').item.json.jobTitle }}",
+                        "Due Date": "={{ $('Set Task Parameters').item.json.dueDate }}",
+                        "Recipient": "={{ $('Set Task Parameters').item.json.recipientEmail }}",
+                        "Priority": "={{ $('Set Task Parameters').item.json.priority }}",
+                        "Status": "Sent"
+                    }
+                },
+                "options": {}
+            },
+            "id": "bffff1fe-681e-4e38-be49-0b44832db9f2",
+            "name": "Log to Google Sheets",
+            "type": "n8n-nodes-base.googleSheets",
+            "typeVersion": 4,
+            "position": [
+                1168,
+                -48
+            ],
+            "notes": "Optional: Log all tasks to Google Sheets for tracking"
+        },
+        {
+            "parameters": {
+                "mode": "routeByCondition"
+            },
+            "id": "9c2685e7-12ae-4fe1-9b23-32b1d6b3cd54",
+            "name": "Route to Gmail?",
+            "type": "n8n-nodes-base.switch",
+            "typeVersion": 3,
+            "position": [
+                736,
+                112
+            ],
+            "notes": "Route emails: Gmail addresses → Gmail node"
+        },
+        {
+            "parameters": {
+                "mode": "routeByCondition"
+            },
+            "id": "09d307d4-9ac9-4005-87c7-e488a69537ea",
+            "name": "Route to Outlook?",
+            "type": "n8n-nodes-base.switch",
+            "typeVersion": 3,
+            "position": [
+                736,
+                272
+            ],
+            "notes": "Route emails: Outlook addresses → Outlook node"
+        },
+        {
+            "parameters": {
+                "respondWith": "text",
+                "responseBody": "Task completed successfully!\n• Discord: Sent\n• Email: {{ $('Set Task Parameters').item.json.recipientEmail }}\n• Logged to Sheets",
+                "options": {}
+            },
+            "id": "464d1167-2032-468e-bc1d-4e5f355e2bae",
+            "name": "Success Response",
+            "type": "n8n-nodes-base.respondToWebhook",
+            "typeVersion": 1,
+            "position": [
+                1392,
+                -48
+            ],
+            "notes": "Final success response for LangChain integration"
+        },
+        {
+            "parameters": {
+                "respondWith": "text",
+                "responseBody": "Partial success - some notifications failed",
+                "options": {}
+            },
+            "id": "6c9f66a7-2d7f-4f75-90a6-464753c44348",
+            "name": "Partial Success",
+            "type": "n8n-nodes-base.respondToWebhook",
+            "typeVersion": 1,
+            "position": [
+                1392,
+                112
+            ],
+            "notes": "Handle cases where some notifications succeed"
+        },
+        {
+            "parameters": {},
+            "id": "d4d6afb6-8d8d-413f-8a07-8ad1f5b62142",
+            "name": "On Failure - Log Error",
+            "type": "n8n-nodes-base.noOp",
+            "typeVersion": 1,
+            "position": [
+                1168,
+                400
+            ],
+            "notes": "Error handler - logs failures for debugging"
+        }
+    ],
+    "connections": {
+        "Manual Trigger": {
+            "main": [
+                [
+                    {
+                        "node": "Set Task Parameters",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Daily Schedule (9AM weekdays)": {
+            "main": [
+                [
+                    {
+                        "node": "Set Task Parameters",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Set Task Parameters": {
+            "main": [
+                [
+                    {
+                        "node": "Format Discord Message",
+                        "type": "main",
+                        "index": 0
+                    },
+                    {
+                        "node": "Route to Gmail?",
+                        "type": "main",
+                        "index": 0
+                    },
+                    {
+                        "node": "Route to Outlook?",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Format Discord Message": {
+            "main": [
+                [
+                    {
+                        "node": "Send Discord Alert",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Send Discord Alert": {
+            "main": [
+                [
+                    {
+                        "node": "Log to Google Sheets",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Format Email Content": {
+            "main": [
+                [
+                    {
+                        "node": "Send Gmail Email",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Send Gmail Email": {
+            "main": [
+                [
+                    {
+                        "node": "Log to Google Sheets",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Send Outlook Email": {
+            "main": [
+                [
+                    {
+                        "node": "Log to Google Sheets",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Log to Google Sheets": {
+            "main": [
+                [
+                    {
+                        "node": "Success Response",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        }
+    },
+    "pinData": {},
+    "meta": {
+        "templateCredsSetupCompleted": true,
+        "instanceId": "6e5f9219007b48232e2e4a4e27f375603e9f208a15cfddac41f5e86ef0ee141f"
+    }
+}
