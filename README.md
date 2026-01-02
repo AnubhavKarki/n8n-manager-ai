@@ -1,4 +1,4 @@
-```markdown
+```
 # n8n Manager AI - LangChain Job Automation Workflow
 
 [![MIT License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
