@@ -1,5 +1,5 @@
 
-# n8n Manager AI - LangChain Job Automation Workflow
+# n8n Manager AI - Automation Workflow
 
 [![MIT License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 [![n8n Workflow](https://img.shields.io/badge/n8n-workflow-green.svg)](manager-workflow.json)
