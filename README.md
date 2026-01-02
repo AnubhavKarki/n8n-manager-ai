@@ -1,4 +1,4 @@
-```
+
 # n8n Manager AI - LangChain Job Automation Workflow
 
 [![MIT License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
@@ -19,12 +19,12 @@ Integrates with LangChain projects to automate Discord alerts, Gmail/Outlook ema
 ## Quick Start
 
 ### 1. Import Workflow (30 seconds)
-```
+
 1. Copy manager-workflow.json
 2. n8n → Settings → Import from JSON  
 3. Paste → Import
 4. Configure credentials below
-```
+
 
 ### 2. Required Credentials
 | Service | Credential Name | Setup |
